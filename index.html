@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Slide Text Editor</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/swiper/swiper-bundle.min.css"
+    />
+  </head>
+  <body>
+    <div class="controls">
+      <button id="addText">Add Text</button>
+      <button id="undo">Undo</button>
+      <button id="redo">Redo</button>
+      <select id="fontSize">
+        <option value="20px">20px</option>
+        <option value="24px">24px</option>
+        <option value="32px">32px</option>
+        <option value="48px">48px</option>
+      </select>
+      <select id="fontFamily">
+        <option value="arial">Arial</option>
+        <option value="fantasy">Fantasy</option>
+        <option value="Times New Roman">Times New Roman</option>
+        <option value="cursive">Cursive</option>
+      </select>
+      <select id="color">
+        <option value="red">Red</option>
+        <option value="blue">Blue</option>
+        <option value="white">White</option>
+        <option value="orange">Orange</option>
+        <option value="green">Greeen</option>
+      </select>
+      <button id="bold">Bold</button>
+      <button id="italic">Italic</button>
+    </div>
+
+    <div class="swiper">
+      <div class="swiper-wrapper">
+        <div class="swiper-slide" data-swiper-slide-index="0">
+          <img src="./assets/1.jpg" alt="" />
+          <div class="editor" style="position: relative"></div>
+        </div>
+        <div class="swiper-slide" data-swiper-slide-index="1">
+          <img src="./assets/2.jpg" alt="" />
+          <div class="editor" style="position: relative"></div>
+        </div>
+        <div class="swiper-slide" data-swiper-slide-index="2">
+          <img src="./assets/3.jpg" alt="" />
+          <div class="editor" style="position: relative"></div>
+        </div>
+      </div>
+      <div class="swiper-pagination"></div>
+      <div class="swiper-button-next"></div>
+      <div class="swiper-button-prev"></div>
+    </div>
+
+    <div id="settings" class="settings"></div>
+
+    <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
+    <script src="index.js"></script>
+  </body>
+</html>
