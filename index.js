@@ -36,6 +36,15 @@ function addTextBlock() {
   renderTextBlocks();
 }
 
+function delTextBlock(id) {
+  const activeIndex = getActiveSlideIndex();
+  undoStack.push(JSON.parse(JSON.stringify(slidesTextBlocks[activeIndex])));
+  slidesTextBlocks[activeIndex] = slidesTextBlocks[activeIndex].filter(
+    (block) => block.id != id
+  );
+  renderTextBlocks();
+}
+
 function renderTextBlocks() {
   const activeIndex = getActiveSlideIndex();
   const activeSlide = document.querySelector(".swiper-slide-active");
@@ -43,14 +52,13 @@ function renderTextBlocks() {
 
   if (!editor) return;
 
-  editor.innerHTML = ""; // Clear the editor
+  editor.innerHTML = "";
   if (!slidesTextBlocks[activeIndex]) slidesTextBlocks[activeIndex] = [];
 
   slidesTextBlocks[activeIndex].forEach((block) => {
     const div = document.createElement("div");
     div.className = "text-block";
     div.contentEditable = true;
-    div.innerText = block.content;
     div.style.fontSize = block.fontSize;
     div.style.fontStyle = block.fontStyle;
     div.style.fontFamily = block.fontFamily;
@@ -59,6 +67,10 @@ function renderTextBlocks() {
     div.style.left = `${block.position.x}px`;
     div.style.top = `${block.position.y}px`;
     div.style.position = "absolute";
+    div.innerHTML = `
+      <p>${block.content}</p>
+      <button onclick="delTextBlock(${block.id})" class='delBlock'>Del</button>
+      `;
 
     div.onblur = () => (block.content = div.innerText);
 
@@ -137,40 +149,49 @@ document.getElementById("redo").onclick = () => {
   }
 };
 
-
 document.getElementById("fontSize").onchange = (e) => {
+  const activeIndex = getActiveSlideIndex();
   if (selectedBlock) {
     selectedBlock.fontSize = e.target.value;
+    undoStack.push(JSON.parse(JSON.stringify(slidesTextBlocks[activeIndex])));
     renderTextBlocks();
   }
 };
 
 document.getElementById("fontFamily").onchange = (e) => {
+  const activeIndex = getActiveSlideIndex();
   if (selectedBlock) {
     selectedBlock.fontFamily = e.target.value;
+    undoStack.push(JSON.parse(JSON.stringify(slidesTextBlocks[activeIndex])));
     renderTextBlocks();
   }
 };
 
 document.getElementById("color").onchange = (e) => {
+  const activeIndex = getActiveSlideIndex();
   if (selectedBlock) {
     selectedBlock.color = e.target.value;
+    undoStack.push(JSON.parse(JSON.stringify(slidesTextBlocks[activeIndex])));
     renderTextBlocks();
   }
 };
 
 document.getElementById("bold").onclick = () => {
+  const activeIndex = getActiveSlideIndex();
   if (selectedBlock) {
     selectedBlock.fontWeight =
       selectedBlock.fontWeight === "bold" ? "normal" : "bold";
+    undoStack.push(JSON.parse(JSON.stringify(slidesTextBlocks[activeIndex])));
     renderTextBlocks();
   }
 };
 
 document.getElementById("italic").onclick = () => {
+  const activeIndex = getActiveSlideIndex();
   if (selectedBlock) {
     selectedBlock.fontStyle =
       selectedBlock.fontStyle === "italic" ? "normal" : "italic";
+    undoStack.push(JSON.parse(JSON.stringify(slidesTextBlocks[activeIndex])));
     renderTextBlocks();
   }
 };

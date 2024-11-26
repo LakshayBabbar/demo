@@ -10,6 +10,9 @@ body {
 
 .controls {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
   gap: 10px;
   margin: 10px 0;
 }
@@ -22,7 +25,7 @@ select {
 }
 
 .swiper {
-  width: 25vw;
+  width: 25rem;
   height: fit-content;
   aspect-ratio: 9/16;
   margin: 20px auto;
@@ -57,12 +60,39 @@ select {
 }
 
 .text-block {
-  padding: 5px;
   border-radius: 3px;
   cursor: move;
   z-index: 999;
+  position: relative;
+}
+.text-block p {
+  margin: 0;
+  padding: 4px;
 }
 
-.text-block:active {
+.delBlock {
+  position: absolute;
+  display: none;
+  bottom: -10px;
+  right: -10px;
+  cursor: pointer;
+  border: none;
+  font-size: 11px;
+  padding: 4px;
+  border-radius: 5px;
+}
+
+.text-block:active .delBlock {
   background-color: #f0f0f079;
+  display: flex;
+}
+
+.text-block:hover .delBlock {
+  display: flex;
+}
+
+@media (max-width: 768px) {
+  .swiper {
+    width: 90vw;
+  }
 }
