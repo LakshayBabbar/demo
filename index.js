@@ -3,46 +3,51 @@ const undoStack = [];
 const redoStack = [];
 let selectedBlock = null;
 
-const settings = document.getElementById("settings");
+// Initialize Swiper
+const swiper = new Swiper(".swiper", {
+  navigation: {
+    nextEl: ".swiper-button-next",
+    prevEl: ".swiper-button-prev",
+  },
+  pagination: {
+    el: ".swiper-pagination",
+  },
+  on: {
+    slideChange: () => {
+      selectedBlock = null; // Reset selected block on slide change
+      renderTextBlocks();
+    },
+  },
+});
 
 function getActiveSlideIndex() {
   const activeSlide = document.querySelector(".swiper-slide-active");
-  return activeSlide ? activeSlide.dataset.swiperSlideIndex : "0";
+  return activeSlide ? activeSlide.dataset.swiperSlideIndex : null;
 }
 
 function saveState() {
   const activeIndex = getActiveSlideIndex();
-  if (!slidesTextBlocks[activeIndex]) slidesTextBlocks[activeIndex] = [];
-  undoStack.push(JSON.parse(JSON.stringify(slidesTextBlocks[activeIndex])));
-  redoStack.length = 0;
+  if (activeIndex !== null) {
+    if (!slidesTextBlocks[activeIndex]) slidesTextBlocks[activeIndex] = [];
+    undoStack.push(JSON.parse(JSON.stringify(slidesTextBlocks[activeIndex])));
+    redoStack.length = 0;
+  }
 }
 
-function addTextBlock() {
-  saveState();
-  const id = Date.now();
-  const activeIndex = getActiveSlideIndex();
+function addNewSlide(imageSrc) {
+  const slideIndex = swiper.slides.length;
+  const slideHTML = `
+    <div class="swiper-slide" data-swiper-slide-index="${slideIndex}">
+      <img src="${imageSrc}" alt="Slide Image" style="width: 100%; height: 100%" />
+      <div class="editor" style="position: relative"></div>
+    </div>
+  `;
+  const wrapper = document.querySelector(".swiper-wrapper");
+  wrapper.insertAdjacentHTML("beforeend", slideHTML);
 
-  if (!slidesTextBlocks[activeIndex]) slidesTextBlocks[activeIndex] = [];
-  slidesTextBlocks[activeIndex].push({
-    id,
-    content: "Editable Text",
-    fontSize: "20px",
-    fontFamily: "Arial",
-    color: "white",
-    fontStyle: "normal",
-    fontWeight: "normal",
-    position: { x: 100, y: 100 },
-  });
-  renderTextBlocks();
-}
-
-function delTextBlock(id) {
-  const activeIndex = getActiveSlideIndex();
-  undoStack.push(JSON.parse(JSON.stringify(slidesTextBlocks[activeIndex])));
-  slidesTextBlocks[activeIndex] = slidesTextBlocks[activeIndex].filter(
-    (block) => block.id != id
-  );
-  renderTextBlocks();
+  slidesTextBlocks[slideIndex] = [];
+  swiper.update();
+  swiper.slideTo(slideIndex);
 }
 
 function renderTextBlocks() {
@@ -50,7 +55,7 @@ function renderTextBlocks() {
   const activeSlide = document.querySelector(".swiper-slide-active");
   const editor = activeSlide?.querySelector(".editor");
 
-  if (!editor) return;
+  if (!editor || activeIndex === null) return;
 
   editor.innerHTML = "";
   if (!slidesTextBlocks[activeIndex]) slidesTextBlocks[activeIndex] = [];
@@ -67,17 +72,16 @@ function renderTextBlocks() {
     div.style.left = `${block.position.x}px`;
     div.style.top = `${block.position.y}px`;
     div.style.position = "absolute";
-    div.innerHTML = `
-      <p>${block.content}</p>
-      <button onclick="delTextBlock(${block.id})" class='delBlock'>Del</button>
-      `;
+    div.innerHTML = block.content;
 
-    div.onblur = () => (block.content = div.innerText);
+    div.oninput = () => (block.content = div.innerHTML);
+
+    div.onclick = () => {
+      selectedBlock = block; // Set the selected block
+      updateStyleControls();
+    };
 
     div.onmousedown = (e) => {
-      selectedBlock = block;
-      settings.style.display = "flex";
-
       const shiftX = e.clientX - div.getBoundingClientRect().left;
       const shiftY = e.clientY - div.getBoundingClientRect().top;
 
@@ -127,87 +131,103 @@ function renderTextBlocks() {
   });
 }
 
-document.getElementById("addText").onclick = addTextBlock;
+function updateStyleControls() {
+  if (selectedBlock) {
+    document.getElementById("fontSize").value = selectedBlock.fontSize;
+    document.getElementById("fontFamily").value = selectedBlock.fontFamily;
+    document.getElementById("color").value = selectedBlock.color;
+  }
+}
+
+document.getElementById("imageUpload").onchange = (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      addNewSlide(event.target.result);
+    };
+    reader.readAsDataURL(file);
+  }
+};
+
+document.getElementById("addText").onclick = () => {
+  const activeIndex = getActiveSlideIndex();
+  if (activeIndex === null) {
+    alert("Please upload an image to create a slide first.");
+    return;
+  }
+
+  saveState();
+  const id = Date.now();
+  slidesTextBlocks[activeIndex].push({
+    id,
+    content: "Editable Text",
+    fontSize: "20px",
+    fontFamily: "Arial",
+    color: "white",
+    fontStyle: "normal",
+    fontWeight: "normal",
+    position: { x: 100, y: 100 },
+  });
+  renderTextBlocks();
+};
 
 document.getElementById("undo").onclick = () => {
   const activeIndex = getActiveSlideIndex();
-  if (undoStack.length && slidesTextBlocks[activeIndex]) {
-    redoStack.push([...slidesTextBlocks[activeIndex]]);
-    slidesTextBlocks[activeIndex].length = 0;
-    slidesTextBlocks[activeIndex].push(...undoStack.pop());
+  if (undoStack.length && activeIndex !== null) {
+    redoStack.push(JSON.parse(JSON.stringify(slidesTextBlocks[activeIndex])));
+    slidesTextBlocks[activeIndex] = undoStack.pop();
     renderTextBlocks();
   }
 };
 
 document.getElementById("redo").onclick = () => {
   const activeIndex = getActiveSlideIndex();
-  if (redoStack.length && slidesTextBlocks[activeIndex]) {
-    undoStack.push([...slidesTextBlocks[activeIndex]]);
-    slidesTextBlocks[activeIndex].length = 0;
-    slidesTextBlocks[activeIndex].push(...redoStack.pop());
+  if (redoStack.length && activeIndex !== null) {
+    undoStack.push(JSON.parse(JSON.stringify(slidesTextBlocks[activeIndex])));
+    slidesTextBlocks[activeIndex] = redoStack.pop();
     renderTextBlocks();
   }
 };
 
 document.getElementById("fontSize").onchange = (e) => {
-  const activeIndex = getActiveSlideIndex();
   if (selectedBlock) {
+    saveState();
     selectedBlock.fontSize = e.target.value;
-    undoStack.push(JSON.parse(JSON.stringify(slidesTextBlocks[activeIndex])));
     renderTextBlocks();
   }
 };
 
 document.getElementById("fontFamily").onchange = (e) => {
-  const activeIndex = getActiveSlideIndex();
   if (selectedBlock) {
+    saveState();
     selectedBlock.fontFamily = e.target.value;
-    undoStack.push(JSON.parse(JSON.stringify(slidesTextBlocks[activeIndex])));
     renderTextBlocks();
   }
 };
 
 document.getElementById("color").onchange = (e) => {
-  const activeIndex = getActiveSlideIndex();
   if (selectedBlock) {
+    saveState();
     selectedBlock.color = e.target.value;
-    undoStack.push(JSON.parse(JSON.stringify(slidesTextBlocks[activeIndex])));
     renderTextBlocks();
   }
 };
 
 document.getElementById("bold").onclick = () => {
-  const activeIndex = getActiveSlideIndex();
   if (selectedBlock) {
+    saveState();
     selectedBlock.fontWeight =
       selectedBlock.fontWeight === "bold" ? "normal" : "bold";
-    undoStack.push(JSON.parse(JSON.stringify(slidesTextBlocks[activeIndex])));
     renderTextBlocks();
   }
 };
 
 document.getElementById("italic").onclick = () => {
-  const activeIndex = getActiveSlideIndex();
   if (selectedBlock) {
+    saveState();
     selectedBlock.fontStyle =
       selectedBlock.fontStyle === "italic" ? "normal" : "italic";
-    undoStack.push(JSON.parse(JSON.stringify(slidesTextBlocks[activeIndex])));
     renderTextBlocks();
   }
 };
-
-const swiper = new Swiper(".swiper", {
-  slidesPerView: 1,
-  spaceBetween: 10,
-  pagination: { el: ".swiper-pagination", clickable: true },
-  on: {
-    slideChange: () => {
-      renderTextBlocks();
-    },
-  },
-  allowTouchMove: false,
-  navigation: {
-    nextEl: ".swiper-button-next",
-    prevEl: ".swiper-button-prev",
-  },
-});
